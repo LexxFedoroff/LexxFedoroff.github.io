@@ -1,55 +1,56 @@
 ---
 layout: post
-title: GitVersion
+title: Версия на проектах
 ---
-На проектах используется семантическая версия вида X.Y.Z[-tag.abc]Кратко:
-X - мажорная версия. Меняется, если нет обратной совместимости, после крупных рефакторингов, редизайнов  и т.п.
-Y - минорная версия. Меняется после добавления нового функционала при сохранении обратной совместимости.
-Z - патч-версия. Меняется после баг/хотфиксов.
-tag - предрелизный тег, например alpha, beta, rc
-abc - произвольный номер 
+На проектах удобно вести [семантическое](http://semver.org/) версионирование. Версия имеет вид `X.Y.Z[-tag.abc]`, где:
+- X - мажорная версия. Меняется, если нет обратной совместимости, после крупных рефакторингов, редизайнов и т.п.
+- Y - минорная версия. Меняется после добавления нового функционала при сохранении обратной совместимости.
+- Z - патч-версия. Меняется после баг/хотфиксов.
+- tag - предрелизный тег, например alpha, beta, rc
+- abc - произвольный номер 
 
-Для автоматической генерации версии используется gitversion.
-Установить: choco install gitversion.portable --pre
-По умолчанию gitversion не меняет версию на каждый коммит, что не очень удобно, если используется CI и т.п.
-Поэтому изменим режим версионирования на Continuous Deployment
-Для это необходимо добавить конфиг в корень репозитория GitVersion.yaml:
+Для автоматической генерации семантической версии можно использовать [GitVersion](https://GitVersion.readthedocs.io/en/latest/). Эта утилита командной строки, которая позволяет на основе конфигурации веток в git репозитории вычислить версию.
+
+[Установить](https://GitVersion.readthedocs.io/en/latest/usage/command-line/) GitVersion модно по разному, например через [chocolatey](https://chocolatey.org/): <br/>
+`choco install GitVersion.portable --pre`
+
+По умолчанию GitVersion не меняет версию на каждый коммит, что не очень удобно, если используется CI. Чтобы это исправить можно поменять режим версионирования на [Continuous Deployment](https://GitVersion.readthedocs.io/en/latest/reference/continuous-deployment/)
+В этом режиме версия меняется на каждый комит, для генерации релизной версии необходимо поставить тег с нужной версией.
+Для включения режима необходимо добавить конфиг в корень репозитория GitVersion.yaml:
+```
 mode: ContinuousDeployment
-branches: {}
 ignore:
   sha: []
-Это позволит иметь уникальную версию на каждый коммит.
-Пример генерации версий:
+branches:
+  master:
+    regex: master
+    tag: beta
+  develop:
+    regex: dev(elop)?(ment)?$
+    tag: alpha
+```
+На картинке ниже показан пример генерации версий для репозитория: <br/>
+![Repo]({{ site.url }}\assets\GitVersion\repo.png)
 
-GitVersion помимо генерации семантической версии, генерирует много полезных свойств:
+GitVersion помимо генерации семантической версии, генерирует много свойств, особо полезные из которых:
+```
 {
   "Major":1,
   "Minor":1,
   "Patch":0,
-  "PreReleaseTag":"alpha.4",
-  "PreReleaseTagWithDash":"-alpha.4",
-  "PreReleaseLabel":"alpha",
-  "PreReleaseNumber":4,
-  "BuildMetaData":"",
-  "BuildMetaDataPadded":"",
-  "FullBuildMetaData":"Branch.develop.Sha.769a9ccf76f551095f0a958d0a37c08ecea28c7b",
   "MajorMinorPatch":"1.1.0",
   "SemVer":"1.1.0-alpha.4",
-  "LegacySemVer":"1.1.0-alpha4",
-  "LegacySemVerPadded":"1.1.0-alpha0004",
   "AssemblySemVer":"1.1.0.0",
-  "AssemblySemFileVer":"1.1.0.0",
   "FullSemVer":"1.1.0-alpha.4",
   "InformationalVersion":"1.1.0-alpha.4+Branch.develop.Sha.769a9ccf76f551095f0a958d0a37c08ecea28c7b",
-  "BranchName":"develop",
-  "Sha":"769a9ccf76f551095f0a958d0a37c08ecea28c7b",
-  "NuGetVersionV2":"1.1.0-alpha0004",
-  "NuGetVersion":"1.1.0-alpha0004",
-  "NuGetPreReleaseTagV2":"alpha0004",
-  "NuGetPreReleaseTag":"alpha0004",
-  "CommitsSinceVersionSource":4,
-  "CommitsSinceVersionSourcePadded":"0004",
-  "CommitDate":"2017-06-13"
+  "NuGetVersionV2":"1.1.0-alpha0004"
 }
+```
 
-TODO пример работы с GitVersion через msbuild
+Свойство NuGetVersionV2 можно использовать для имени nuget пакета. Остальные свойства можно внедрить внутрь сборки:
+```
+[assembly: System.Reflection.AssemblyVersion("1.1.0.0")]
+[assembly: System.Reflection.AssemblyFileVersion("1.1.0.01201")]
+[assembly: System.Reflection.AssemblyInformationalVersion("1.1.0-alpha.4+Branch.develop.Sha.769a9ccf76f551095f0a958d0a37c08ecea28c7b")]
+```
+Для этого можно использовать [MSBuild Task](https://gitversion.readthedocs.io/en/latest/usage/msbuild-task/)
