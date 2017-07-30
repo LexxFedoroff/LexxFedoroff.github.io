@@ -30,7 +30,7 @@ branches:
     tag: alpha
 ```
 На картинке ниже показан пример генерации версий для репозитория: <br/>
-![Repo]({{ site.github.url }}\assets\GitVersion\repo.png)
+![Repo]({{ site.github.url }}\assets\Gitversion\repo.png)
 
 GitVersion помимо генерации семантической версии, генерирует много свойств, особо полезные из которых:
 ```
