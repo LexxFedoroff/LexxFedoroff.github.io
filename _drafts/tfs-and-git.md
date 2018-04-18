@@ -1,20 +1,24 @@
 ---
 layout: post
-title: Выполнение git скриптов под агентом tfs
+title: Выполнение git скриптов под агентом TFS
 ---
-Основная статья https://docs.microsoft.com/en-us/vsts/build-release/actions/scripts/git-commands?view=vsts
+Иногда необходимо выполнять git скрипты на билд агенте TFS. 
+<details>
+  <summary>Пример</summary>
+  На одном проекте на билд агенте происходил билд react бандла c последующим коммитом и пушем.
+</details>  
+
+На сайте microsoft.com есть вводная [статья](https://docs.microsoft.com/en-us/vsts/build-release/actions/scripts/git-commands?view=vsts), 
+раскаживающая что и как делать.  
+Перечислю основные моменты:
+* Необходимо разрешить билд агенту комитить в ветку, для этого надо дать права `Contribute: Allow`
+* Разрешить OAuth token для скриптов на вкладке опций
+* Чтобы git не ругался при комитах что нет имени пользователя и email, необходимо комитить следующей командой:  
 ```
-  <Target Name="_clone_front">
-    <PropertyGroup>
-      <AuthHeader Condition="'$(System_AccessToken)' != ''">-c http.extraheader="AUTHORIZATION: bearer $(System_AccessToken)"</AuthHeader>
-      <GitClone>$(GitExe) $(AuthHeader) clone $(RepoUrl) $(SrcFront)</GitClone>
-      <GitCheckout>$(GitExe) checkout develop --force</GitCheckout>
-      <GitPull>$(GitExe) $(AuthHeader) pull --ff-only </GitPull>
-    </PropertyGroup>
-    <Message Text="Pulling front..." Importance="Low"/>
-    <Exec Command="$(GitClone)" Condition="!Exists($(SrcFront))" />
-    <Exec Command="$(GitCheckout)" Condition="Exists($(SrcFront))" WorkingDirectory="$(SrcFront)" />
-    <Exec Command="$(GitPull)" Condition="Exists($(SrcFront))" WorkingDirectory="$(SrcFront)" />
-    <Message Text="Front is up to date" Importance="high" />
-  </Target>
+git -c "user.name=Build Agent" -c "user.email=build-agent@example.ru" commit -m "<commit message>"
 ```
+* Команды `pull`, `push` и т.п. выполнять с ключом `-c http.extraheader`:  
+```
+git -c http.extraheader="AUTHORIZATION: bearer $(System.AccessToken)" pull
+```
+где `System.AccessToken` переменная TFS
